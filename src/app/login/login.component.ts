@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DataService } from '../services/data.service';
 
@@ -27,8 +28,13 @@ pswd=""
     1002:{acno:1002,username:'Vyom',password:1002,balance:4000}
   }
 
+  loginForm = this.fb.group({
+    acno:['',[Validators.required,Validators.pattern('[0-9]*')]],
+    pswd:['',[Validators.required,Validators.pattern('[a-zA-z0-90-9]*')]]
+  })
+
   // constructor - Dependency Injection
-  constructor(private router:Router,private ds:DataService) { }
+  constructor(private router:Router,private ds:DataService, private fb:FormBuilder) { }
 
   // life cycle hook - angular
   ngOnInit(): void {
@@ -53,16 +59,30 @@ pswd=""
 
   //login{}
   login(){
-    var acno = this.acno
-    var pswd = this.pswd
-    // calling login - dataService
-    const result=this.ds.login(acno,pswd)    
-    if(result){
-        alert('Login Successful')
-        this.router.navigateByUrl('dashboard')
-    }   
-    }
+    var acno = this.loginForm.value.acno
+    var pswd = this.loginForm.value.pswd
+    if(this.loginForm.valid){
+    // calling login - dataService - asynchronous
+    this.ds.login(acno,pswd)
+    .subscribe(
+      (result:any)=>{ 
+        localStorage.setItem('currentUsername',JSON.stringify(result.currentUsername))
+        localStorage.setItem('currentAcno',JSON.stringify(result.currentAcno))
+        localStorage.setItem('token',JSON.stringify(result.token))
 
+        alert(result.message)
+        this.router.navigateByUrl('dashboard')
+      },
+      result =>{
+        alert(result.error.message)
+      }
+      )
+   }
+   else{
+    alert('Invalid Form...!!!')
+    }
+  }
+}
 // template reference
   // login(a:any,p:any){
   //   // console.log(a);
@@ -85,4 +105,3 @@ pswd=""
   // }
 
 
-}
